@@ -3,6 +3,8 @@ import {unlink} from 'fs/promises'
 import path from "path";
 import { v4 as uuid } from "uuid";
 import { BASE_DIR } from "../globals";
+import { input} from '../globals'
+import { dependecies } from "../globals";
 
 function stripImports(code: string) {
   code = code.replace(/^\s*(import\s.*;|\s*import\s.*from\s.*;)\s*$/gm, "console.log('importing is prevented')");
@@ -31,17 +33,26 @@ function extension(language: string): string {
   }
 }
 
-export function createFile(language: string, code: string , directory :string) {
+function formatCode(language : string , code:string , functionName:string) : string{
+  switch (language) {
+    case "python":
+      return formulatePython(code , functionName)  ; 
+      break;
+    default:
+      throw Error("Wrong Language ")
+  }
+}
+
+export function createFile(language: string, code: string , directory :string, functionName:string) {
     const folder = `${directory}/user_code`;
   const id = uuid();
   const fileName = id + extension(language);
   const filePath = path.join(folder, fileName);
-
   try {
     if (!existsSync(folder)) {
       mkdirSync(folder, { recursive: true });
     }
-    writeFileSync(filePath, stripImports(code));
+    writeFileSync(filePath,formatCode(language ,code ,functionName));
     return filePath;
   } catch (error) {
     console.error("error :", error);
@@ -57,4 +68,8 @@ export async function deleteFile(filePath:string) {
   }
 }
 
+const formulatePython = (code: string , functionName : string) =>{
+  let modedCode =code+"\n" + dependecies.linkedList.python +"\n"+dependecies.binaryTree.python +"\n"+ input.python+"\n" + `parse(${functionName}(*inputToArray()))` ; 
+  return modedCode
+}
 

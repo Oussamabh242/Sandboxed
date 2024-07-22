@@ -136,7 +136,7 @@ interface SubmitResponse {
  }
 
 
-export async function submit(file :string , timeout :number, testcases: Testcase[]){
+export async function submitTypescript(file :string , timeout :number, testcases: Testcase[]){
 		const subRes : SubmitResponse= { passed : 0  }  ;
     const res = await compile(file) ; 
     const compiledFile = file.substring(0 , file.length - 2)+"js";

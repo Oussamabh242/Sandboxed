@@ -127,7 +127,7 @@ export async function submitPython(file: string,timeout: number, tests: Testcase
 
   }
   finally {
-    deleteFile(file)
+    //deleteFile(file)
 
       }
 }

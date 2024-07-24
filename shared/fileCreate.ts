@@ -1,4 +1,4 @@
-import { writeFileSync  , existsSync ,mkdirSync} from "fs";
+import{ writeFileSync  , existsSync ,mkdirSync} from "fs";
 import {unlink} from 'fs/promises'
 import path from "path";
 import { v4 as uuid } from "uuid";
@@ -37,7 +37,8 @@ function formatCode(language : string , code:string , functionName:string) : str
   switch (language) {
     case "python":
       return formulatePython(code , functionName)  ; 
-      break;
+    case "typescript" :
+      return formulateTypeScript(code , functionName)  ;
     default:
       throw Error("Wrong Language ")
   }
@@ -69,7 +70,14 @@ export async function deleteFile(filePath:string) {
 }
 
 const formulatePython = (code: string , functionName : string) =>{
-  let modedCode =code+"\n" + dependecies.linkedList.python +"\n"+dependecies.binaryTree.python +"\n"+ input.python+"\n" + `parse(${functionName}(*inputToArray()))` ; 
+  let modedCode = input.python+"\n" + code+"\n" + dependecies.linkedList.python+"\n" + dependecies.binaryTree.python+"\n" + `parse(${functionName}(*inputToArray()))` ; 
   return modedCode
 }
+const formulateTypeScript = (code: string , functionName : string)=>{
+  let modedCode = input.typescript +"\n"+stripImports(code)+"\n"+ `
 
+   parse(twoSum(...(inputToArray() as [any , any])));
+
+` 
+  return modedCode ;
+}

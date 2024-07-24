@@ -11,7 +11,7 @@ interface Response {
     expected? : any
 }
 interface Testcase {
-    input : any[]
+    input : any
     output : any
 }
 
@@ -20,12 +20,14 @@ interface CompileRes{
     stderr : string
 }
 
-export function execTypescript(file:string , timeout:number , input:any[]): Promise<Response>{
+export function execTypescript(file:string , timeout:number , input : any): Promise<Response>{
 		return new Promise((resolve , reject)=>{
 				const response = { result: null , message:"",stdout :"" ,  stderr:""   }  ;
 
-				const child = spawn('node', [ file ,...input], {
-						stdio: ['pipe', 'pipe', 'pipe', 'ipc']
+				const child = spawn('node', [ file ,JSON.stringify(input)], {
+						stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
+            gid : 1000 ,
+            uid : 1000 
 				});
 				const timer = setTimeout(() => {
 						response.stderr = "Time limit Exceeded";
@@ -42,10 +44,9 @@ export function execTypescript(file:string , timeout:number , input:any[]): Prom
 				});
 
 				child.on('message', (msg: any) => {
-						if (msg.type === 'result') {
+						if (deepEqual(msg.type , 'result')) {
 										response.result=msg.content ; 
-								 
-						}
+                    						}
 				});
 
 				child.on("error", (err : any) => {
@@ -96,7 +97,7 @@ export async function runTypescript(file: string, timeout: number, tests: Testca
 function check(response : Response , expected: any){
 		if(response.result !== null){
 				
-			response.result===expected? response.message = "Accepted" : response.message = "Wrong Answer" ; 
+			deepEqual(response.result , expected)? response.message = "Accepted" : response.message = "Wrong Answer" ; 
 		}
 
 }
@@ -151,7 +152,7 @@ export async function submitTypescript(file :string , timeout :number, testcases
 		for(let i = 0  ; i<testcases.length ; i++){
 				const response = await execTypescript(compiledFile , timeout , testcases[i].input) ;
 
-				if(response.result === testcases[i].output){
+				if(deepEqual(response.result , testcases[i].output )){
 						subRes.passed++ ; 
 				}
 				else {
@@ -187,15 +188,37 @@ const tests = [
     }
 ];
 
-// submit(childPath , 3000 , tests)
-//   .then(res=>{
-// 			console.log(res) ; 
-// 	})
+function deepEqual(a: any, b: any) {
+  if (a === b) {
+    return true;
+  }
 
-// runTypescript(
-//   "/home/oussamabh242/Mine/Custom/JS/sandbox2/user_code/cad49132-854a-47dc-9c27-a4182b7af30a.ts",
-//   3,
-//   tests
-// ).then((res) => {
-//   console.log(res);
-// });
+  if (
+    a == null ||
+    b == null ||
+    typeof a !== "object" ||
+    typeof b !== "object"
+  ) {
+    return false;
+  }
+
+  if (Array.isArray(a) !== Array.isArray(b)) {
+    return false;
+  }
+
+  const keysA = Object.keys(a);
+  const keysB = Object.keys(b);
+
+  if (keysA.length !== keysB.length) {
+    return false;
+  }
+
+  for (let key of keysA) {
+    if (!keysB.includes(key) || !deepEqual(a[key], b[key])) {
+      return false;
+    }
+  }
+
+  return true;
+}
+

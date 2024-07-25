@@ -1,36 +1,88 @@
-import {spawn} from 'child_process' ; 
-import path from 'path' ;
-import { deleteFile } from '../../shared/fileCreate';
+import { spawn } from "child_process"; 
+import { readFileSync , existsSync , unlinkSync, unlink, writeFileSync } from "fs" ; 
+import test from "node:test";
+import { stderr } from "process";
+import { deleteFile , createFile } from '../../shared/fileCreate';
 import { trimOutput } from '../../shared/utils'; 
 
-interface Response {
-	result : any | null; 
-	stdout : string
-	message? : string
-	stderr: string;
-    expected? : any
+
+interface CompileRes {
+  code : number ,
+  stderr : string ,
+  compiled : string , 
 }
+
 interface Testcase {
-    input : any
-    output : any
+  input : any ; 
+  output : any
 }
 
-interface CompileRes{
-    code: number|null , 
-    stderr : string
+interface ExecResponse {
+	result? : any | null; 
+	stdout? : string
+	stderr?: string;
+  code? : number
 }
 
-export function execTypescript(file:string , timeout:number , input : any): Promise<Response>{
-		return new Promise((resolve , reject)=>{
-				const response = { result: null , message:"",stdout :"" ,  stderr:""   }  ;
+interface RunResponse extends ExecResponse {
+  input? : any ; 
+  expected? : any ;
+  message? : string
+}
 
-				const child = spawn('node', [ file ,JSON.stringify(input)], {
+interface SubmitResponse extends RunResponse {
+  passed : number 
+}
+
+ function compile(file: string) : Promise<CompileRes> {
+   return new Promise(async (resolve) => {
+      let stderr: string = "";
+      const compiledFilePath = file.substring(0 , file.length-2) +"js"
+      const child = spawn("npx", ["tsc", file], {
+        stdio: ["pipe", "pipe", "pipe", "ipc"],
+      });
+      child.stdout?.on("data", (data : any) => {
+        stderr += data.toString();
+      });
+
+      child.on("close", (code : any) => {
+        let compiled = "";
+        if (code === 0 && stderr.length === 0) {
+          compiled = readFileSync(compiledFilePath).toString();
+        }
+        // unlinkSync(compiledFilePath);
+        unlinkSync(file); //MTH F
+        resolve({ code, stderr, compiled });
+      });
+
+
+   });
+ }
+
+async function writeCompiled(filePath : string, functionName : string) : Promise<{code: number , file : string , stderr? : string}>{
+    const compiledFilePath = filePath.substring(0 , filePath.length-2)+"js" ; 
+  const compileRes = await compile(filePath) ; 
+  if( !deepEqual(compileRes.code , 0) || compileRes.stderr.length>0){
+    return {code: compileRes.code ,file : compiledFilePath , stderr: compileRes.stderr}
+  }
+
+  writeFileSync(compiledFilePath, writevm(compileRes.compiled , functionName)) ;
+  // await deleteFile(filePath) ; 
+  return {code : 0 , file :  compiledFilePath}
+}
+
+export async function execTypescript(compiledFile: string , timeout:number , input : any ): Promise<ExecResponse>{
+		return new Promise(async (resolve)=>{
+				const response :ExecResponse = { result: null ,stdout :"" ,  stderr:"" , code : 0   }  ;
+
+				const child = spawn('node', [ compiledFile, JSON.stringify(input)], {
 						stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
-            gid : 1000 ,
-            uid : 1000 
+				        gid : 1000 ,
+				        uid : 1000 
 				});
 				const timer = setTimeout(() => {
 						response.stderr = "Time limit Exceeded";
+            response.code = 1  ; 
 						child.kill("SIGKILL");
 
 				}, timeout*1000);
@@ -40,13 +92,14 @@ export function execTypescript(file:string , timeout:number , input : any): Prom
 				});
 
 				child.stderr?.on('data', (data) => {
+            response.code = 1 ; 
 						response.stderr += data.toString();
 				});
 
 				child.on('message', (msg: any) => {
 						if (deepEqual(msg.type , 'result')) {
 										response.result=msg.content ; 
-                    						}
+		                  						}
 				});
 
 				child.on("error", (err : any) => {
@@ -55,138 +108,114 @@ export function execTypescript(file:string , timeout:number , input : any): Prom
 				});
 
 				child.on('exit', (code) => {
-						clearTimeout(timer);
+          //if(compileRes.file) unlinkSync(compileRes.file) ; 
+          if(response.stdout)response.stdout = trimOutput(response.stdout) ; 
+					clearTimeout(timer);
 
-				response.stdout = trimOutput(response.stdout) ; 
-        response.stderr = trimOutput(response.stderr) ;
-      resolve(response) ; 
+		    resolve(response) ; 
 		});
-})
+})} ;
 
-}
 
-function trimFileName(errorMessage: string) {
-  const regex = /^.*?\(\d+,\d+\):\s*/gm;
-  return errorMessage.replace(regex, "");
-}
 
-export async function runTypescript(file: string, timeout: number, tests: Testcase[]): Promise<Response[] >{
-    const arr : Response[] = [] ; 
-    const res = await compile(file) ; 
-    const compiledFile = file.substring(0 , file.length - 2)+"js";
-    if(res.code != 0 && res.stderr.length>0){
-        for(let i = 0 ; i<tests.length ; i++){
-            arr.push({result : null  , stdout : "" , stderr : trimFileName(res.stderr) , message : "Compiling error" , expected : tests[i].output})   ; 
-
-        }
+export async function runTypescript(file: string, timeout: number, tests: Testcase[] , functionName : string , order: number):Promise<RunResponse[] >{
+  const compiling = await writeCompiled(file , functionName) ;
+  try{
+    let good = true ; let globalStderr = "" ; 
+    const arr : RunResponse[] = [] ; 
+    
+    if(!deepEqual(compiling.code , 0) || compiling.stderr ){
+      for(let i = 0 ; i< tests.length ; i++){
+        arr.push({result : null , stderr : compiling.stderr ,message : "Compiling Error",stdout : "" , input : tests[i].input ,
+      expected : tests[i].output} as RunResponse)  ;  
+      }
+      return arr ; 
     }
+    for(let i = 0 ; i<tests.length ; i++){
 
-    else {
-        for(let i = 0 ; i<tests.length ; i++){
-            const result = await execTypescript(compiledFile , timeout ,tests[i].input  ) ; 
-            result.expected = tests[i].output ; 
-            check(result , tests[i].output);
-            arr.push(result);  
+      if(good){
+        let res = await execTypescript(compiling.file , timeout , tests[i].input) 
+        let msg ;
+        if(compare(res.result , tests[i].output ,order )){msg = "Accepted"} else {msg = "Wrong Answer"} ; 
+        arr.push({...res , input : tests[i].input ,expected : tests[i].output ,message :msg  }as RunResponse)
+        if(!deepEqual(res.code , 0) && res.stderr){
+          good = false  ; 
+          globalStderr = res.stderr  ;
         }
-    }
-    deleteFile(compiledFile) ; 
-    deleteFile(file) ;
-    return arr
+      }
+      else {
+        arr.push({result : null , stderr : globalStderr  , input : tests[i].input ,expected : tests[i].output ,
+          message :"Wrong Answer"  }as RunResponse)
+      }
+    
+    } 
+   return arr ; 
+  }finally{
+      await deleteFile(compiling.file)
+  }
 };
 
-function check(response : Response , expected: any){
-		if(response.result !== null){
-				
-			deepEqual(response.result , expected)? response.message = "Accepted" : response.message = "Wrong Answer" ; 
-		}
 
-}
-
-// async function run(file :string , timeout:number , input: any[]){
-// 		const response = await runTypescript(file ,timeout  , input ) ; 
-// 		check(response , 3) ; 
-// 		return response 
-// }
-
-interface SubmitResponse {
-		passed : number 
-		input? : any 
-		result? : any
-		expected? : any
-		output?: string
-		stderr?: string 
-		message?: string
-}
-
- function compile(file: string):  Promise<CompileRes> {
-   return new Promise((resolve, reject) => {
-
-     let stderr: string = "";
-     const child = spawn("npx", ["tsc", file], {
-       stdio: ["pipe", "pipe", "pipe", "ipc"],
-     });
-     child.stdout?.on("data", (data) => {
-       stderr += data.toString();
-     });
-
-     child.on("close", (code) => {
-        stderr = trimFileName(stderr)
-        resolve({ code, stderr }as CompileRes );
-     });
-   });
- }
-
-
-export async function submitTypescript(file :string , timeout :number, testcases: Testcase[]){
-		const subRes : SubmitResponse= { passed : 0  }  ;
-    const res = await compile(file) ; 
-    const compiledFile = file.substring(0 , file.length - 2)+"js";
-  try{
-    if(res.code != 0 && res.stderr.length>0){
-    subRes.stderr = res.stderr ; 
-    subRes.message = "Wrong Answer" ;
-    subRes.input = testcases[0].input ; 
-    subRes.expected = testcases[0].output ; 
-    return subRes ; 
-   }
-		for(let i = 0  ; i<testcases.length ; i++){
-				const response = await execTypescript(compiledFile , timeout , testcases[i].input) ;
-
-				if(deepEqual(response.result , testcases[i].output )){
-						subRes.passed++ ; 
-				}
-				else {
-						subRes.result = response.result ; subRes.expected = testcases[i].output ; subRes.output = response.stdout
-						subRes.input = testcases[i].input ; subRes.stderr = response.stderr ; subRes.message = "Wrong Answer" ; 
-						return subRes ; 
-				}
-		}
-		subRes.message = "Accepted" ;
-
-		return subRes ; 
+export async function submitTypescript(file:string , timeout:number , tests : Testcase[] ,functionName : string , order : number){
+  const compiling = await writeCompiled(file , functionName) ;
+  try {
+  let subResponse : SubmitResponse = {passed: 0 } ; 
+  if(!deepEqual(compiling.code , 0) || compiling.stderr){
+    subResponse = {
+      passed : 0 , 
+      stderr : compiling.stderr , 
+      input : tests[0].input ,
+      expected :tests[0].output ,
+      message : "Comiling eroor" 
+    } ;
+    return subResponse ; 
   }
-  finally{
-    await Promise.all([
-            deleteFile(compiledFile),
-            deleteFile(file)
-        ]);
-  }
-}
-
-const tests = [
-    {
-        input: [2 , 5],
-        output: 7,
-    },
-    {
-        input: [1 , 1000],
-        output:1001 
-    },
-    {
-        input: [5, 5],
-        output: 11
+  for(let i = 0 ; i<tests.length ; i++){
+    const execRes = await execTypescript(compiling.file , timeout , tests[i].input) ; 
+    if(!compare(execRes.result , tests[i].output , order)){
+      subResponse = {
+        passed : subResponse.passed ,
+        ...execRes ,
+        input : tests[i].input,
+        expected: tests[i].output,
+        message : "Wrong Answer"
+      }
+      return subResponse ; 
     }
-];
+    subResponse.passed++ ; 
+  }
+  subResponse.message= "Accepted" ;
+  return subResponse  ; 
+  }finally {
+    await deleteFile(compiling.file) ; 
+  }
+}
+
+
+const x : Testcase[] =[
+    {
+        "input": { "candidates": [2, 3, 6, 7], "target": 7 },
+        "output": [[2, 2, 3] , [7]]
+    },
+    {
+        "input": { "candidates": [2, 3, 5], "target": 8 },
+        "output": [[2, 2, 2, 2], [2, 3, 3], [3, 5]]
+    },
+    {
+        "input": { "candidates": [1], "target": 1 },
+        "output": [[1]]
+    },
+    {
+        "input": { "candidates": [1], "target": 2 },
+        "output": [[1, 1]]
+    },
+    {
+        "input": { "candidates": [2], "target": 1 },
+        "output": []
+    }
+]
+
+// submitTypescript("xxx.ts" ,5,x,0).then(res=>console.log(res))
 
 function deepEqual(a: any, b: any) {
   if (a === b) {
@@ -207,7 +236,7 @@ function deepEqual(a: any, b: any) {
   }
 
   const keysA = Object.keys(a);
-  const keysB = Object.keys(b);
+const keysB = Object.keys(b);
 
   if (keysA.length !== keysB.length) {
     return false;
@@ -220,5 +249,77 @@ function deepEqual(a: any, b: any) {
   }
 
   return true;
+}
+
+
+
+function compare(a: any, b: any, order:number =    1): boolean {
+    if (Array.isArray(a) && Array.isArray(b)) {
+        if (order === 0) {
+            const containsAllElements = (arr1: any[], arr2: any[]) => 
+                arr1.every(item1 => arr2.some(item2 => deepEqual(item1, item2)));
+
+            return containsAllElements(a, b) && containsAllElements(b, a);
+        } else {
+
+            return deepEqual(a, b);
+        }
+    } else {
+        return deepEqual(a, b);
+    }
+}
+
+const  writevm  = (code :string , functionName : string)=>{
+  
+return `
+const ivm = require('isolated-vm');
+const isolate = new ivm.Isolate({ memoryLimit: 50 });
+
+function inputToArray() {
+    const input = JSON.parse(process.argv[2]); 
+    let out = [];
+
+    for (const key in input) {
+
+            out.push(input[key]);
+
+    }
+    return out;
+} 
+let tempin = inputToArray() ; 
+
+let input = "" ; 
+for (let i = 0; i < tempin.length; i++) {
+  if (i == tempin.length - 1) {
+    input += JSON.stringify(tempin[i]);
+  } else {
+    input += JSON.stringify(tempin[i]) + ", ";
+  }
+}
+
+const code = 
+\`
+(()=>{
+
+${code}`+ 
+`return ${functionName}`+"(${input}) ;"+`
+})()
+\`
+const context = isolate.createContextSync();
+
+context.evalClosureSync(\`
+  globalThis.console = {
+    log: $0
+  };
+\`, [(...args)=>console.log(...args)]);
+
+const jail = context.global;
+
+jail.setSync('global', jail.derefInto());
+
+const hostile = isolate.compileScriptSync(code);
+hostile.run(context, { release: true, copy: true })
+  .then((result)=> process.send({type :"result", content : result}))
+`
 }
 

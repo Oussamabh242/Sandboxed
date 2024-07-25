@@ -5,6 +5,7 @@ import { createFile ,deleteFile } from "./shared/fileCreate";
 import { BASE_DIR } from "./globals";
 import { runGateway } from "./judge/gateway";
 import { submitGateway } from "./judge/gateway";
+import { parse } from "uuid";
 
 
 const app = express()
@@ -16,16 +17,21 @@ app.use(bodyParser.json());
 app.use(cors()) ; 
 
 app.post("/run" , async (req:Request , res : Response) => {
-    const {code , timeout , language ,functionName, tests } = req.body ;
+    const {code , timeout , language ,functionName, tests,order } = req.body ;
     const file = createFile(language, code, BASE_DIR , functionName); 
-    const result = await runGateway(language ,file , parseInt(timeout) , tests ) ; 
+    const result = await runGateway(language ,file , parseInt(timeout) , tests , functionName , parseInt(order)) ; 
     res.send(result) ; 
 
 }) ; 
+
+
+
+// submitGateway(language ,file,timeout ,tests , functionName).then(res=>console.log(res))
+
  app.post("/submit" , async(req: Request , res :Response)=>{
-   const {code ,  timeout , language  , functionName , tests} = req.body ; 
+   const {code ,  timeout , language  , functionName , tests , order} = req.body ; 
    const file = createFile(language ,code , BASE_DIR , functionName) ;
-   const result = await submitGateway(language ,file,timeout ,tests) ; 
+   const result = await submitGateway(language ,file,timeout ,tests , functionName , parseInt(order)) ; 
    res.send(result)	;
  })
 

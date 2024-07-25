@@ -1,13 +1,16 @@
 import {spawn} from 'child_process' ; 
 import path from 'path' ;
 import { deleteFile } from '../../shared/fileCreate';
-
+import { trimOutput } from '../../shared/utils';
 interface PyResponse {
   stdout: string;
   stderr: string;
   message: string;
   result?: any | null;
-  expected? : any
+  expected? : any 
+  code? : number ,
+  input? : any
+
 }
 
 interface Response {
@@ -15,7 +18,9 @@ interface Response {
 	stdout : string
 	message? : string
 	stderr: string;
-    expected? : any
+    expected? : any ;
+    input : any ;
+    output : any
 }
 
 interface Testcase {
@@ -36,7 +41,7 @@ interface SubmitResponse {
 
 
 function check(response : PyResponse , expected: any){
-    		if(response.result !== null){
+    if(response.result !== null){
 			deepEqual(response.result , expected)? response.message = "Accepted" : response.message = "Wrong Answer" ; 
 		}
 }
@@ -45,11 +50,12 @@ function execPython(file : string , timeout : number , input :any) : Promise<PyR
     const pyChild = spawn("python3", [file, JSON.stringify(input)], {
       stdio: ["pipe", "pipe", "pipe", "ipc"],
     });
-    const response: PyResponse = { stdout: "", stderr: "", message: "" };
+    const response: PyResponse = { stdout: "", stderr: "", message: "" , code : 0 };
     const timer = setTimeout(() => {
       pyChild.kill("SIGKILL");
       response.message = "Time Limit Exceeded";
       response.stderr = "Time Limit Exceeded";
+      response.code = 1
       response.result = null;
     }, timeout * 1000);
     pyChild.stdout?.on("data", (data: any) => {
@@ -61,6 +67,7 @@ function execPython(file : string , timeout : number , input :any) : Promise<PyR
     });
     pyChild.on("error", (error) => {
       response.stderr += error.toString();
+      response.code = 1
       response.result = null;
     });
     pyChild.on("exit", (code) => {
@@ -74,7 +81,7 @@ function execPython(file : string , timeout : number , input :any) : Promise<PyR
         response.result = null;
       }
       x.pop();
-      response.stdout = x.join("\n");
+      response.stdout = trimOutput(x.join("\n"));
       response.stderr = response.stderr.replace(/File ".*?", /g , "code.py ");
       resolve(response);
     });
@@ -89,18 +96,28 @@ function trimFileName(errorMessage: string) {
 
 export async function runPython(file: string,timeout: number, tests: Testcase[]): Promise<PyResponse[] >{
   try{
+    let good = true ; let globalStderr = ""
     const arr : PyResponse[] = [] ; 
     
     for(let i = 0 ; i<tests.length ; i++){
-      const result = await execPython(file , timeout ,tests[i].input  ) ; 
-      result.expected = tests[i].output ; 
-      check(result , tests[i].output);
-      arr.push(result);  
-        }
-     
+      if(good){
+        const result = await execPython(file , timeout ,tests[i].input  ) ; 
+        result.expected = tests[i].output ; 
+        check(result , tests[i].output);
+        arr.push({...result , });   
+        if(deepEqual(result.code , 1)){
 
+          globalStderr = result.stderr ; 
+          good = false ; 
+        }
+      }
+      else{
+        arr.push({result : null ,stdout : "" ,stderr : globalStderr , message :"wrong Answer"  , input:tests[i].input , expected :tests[i].output } as PyResponse)
+      }
+     
+    }
     return arr ; 
-  }
+  } 
   finally{
     await deleteFile(file) ; 
   }

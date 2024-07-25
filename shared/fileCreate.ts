@@ -38,7 +38,7 @@ function formatCode(language : string , code:string , functionName:string) : str
     case "python":
       return formulatePython(code , functionName)  ; 
     case "typescript" :
-      return formulateTypeScript(code , functionName)  ;
+      return formulateTypeScript(code)  ;
     default:
       throw Error("Wrong Language ")
   }
@@ -73,11 +73,13 @@ const formulatePython = (code: string , functionName : string) =>{
   let modedCode = input.python+"\n" + code+"\n" + dependecies.linkedList.python+"\n" + dependecies.binaryTree.python+"\n" + `parse(${functionName}(*inputToArray()))` ; 
   return modedCode
 }
-const formulateTypeScript = (code: string , functionName : string)=>{
-  let modedCode = input.typescript +"\n"+stripImports(code)+"\n"+ `
+const formulateTypeScript = (code: string)=>{
+/*  let modedCode = input.typescript +"\n"+stripImports(code)+"\n"+ `
 
    parse(twoSum(...(inputToArray() as [any , any])));
 
 ` 
-  return modedCode ;
-}
+  return modedCode ;*/
+
+  return code ; 
+} 

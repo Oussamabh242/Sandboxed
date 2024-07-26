@@ -11,14 +11,14 @@ import { parse } from "uuid";
 const app = express()
 const port = process.env.PORT || 3333 ; 
 
-
+let num = 0 ; 
 
 app.use(bodyParser.json()); 
 app.use(cors()) ; 
 
 app.post("/run" , async (req:Request , res : Response) => {
     const {code , timeout , language ,functionName, tests,order } = req.body ;
-    const file = createFile(language, code, BASE_DIR , functionName); 
+    const file = await createFile(language, code, BASE_DIR , functionName ,Object.keys(tests[0].input).length); 
     const result = await runGateway(language ,file , parseInt(timeout) , tests , functionName , parseInt(order)) ; 
     res.send(result) ; 
 
@@ -30,9 +30,11 @@ app.post("/run" , async (req:Request , res : Response) => {
 
  app.post("/submit" , async(req: Request , res :Response)=>{
    const {code ,  timeout , language  , functionName , tests , order} = req.body ; 
-   const file = createFile(language ,code , BASE_DIR , functionName) ;
+  
+   const file =await  createFile(language ,code , BASE_DIR , functionName , Object.keys(tests[0].input).length) ;
    const result = await submitGateway(language ,file,timeout ,tests , functionName , parseInt(order)) ; 
    res.send(result)	;
+
  })
 
 

@@ -1,7 +1,9 @@
 import {spawn} from 'child_process' ; 
 import path from 'path' ;
 import { deleteFile } from '../../shared/fileCreate';
-import { trimOutput } from '../../shared/utils';
+import { compare, trimOutput } from '../../shared/utils';
+import { check } from '../../shared/utils';
+
 interface PyResponse {
   stdout: string;
   stderr: string;
@@ -40,11 +42,7 @@ interface SubmitResponse {
 
 
 
-function check(response : PyResponse , expected: any){
-    if(response.result !== null){
-			deepEqual(response.result , expected)? response.message = "Accepted" : response.message = "Wrong Answer" ; 
-		}
-}
+
 function execPython(file : string , timeout : number , input :any) : Promise<PyResponse> {
   return new Promise((resolve) => {
     const pyChild = spawn("python3", [file, JSON.stringify(input)], {
@@ -94,7 +92,7 @@ function trimFileName(errorMessage: string) {
   return errorMessage.replace(regex, "");
 }
 
-export async function runPython(file: string,timeout: number, tests: Testcase[]): Promise<PyResponse[] >{
+export async function runPython(file: string,timeout: number, tests: Testcase[], order : number = 1): Promise<PyResponse[] >{
   try{
     let good = true ; let globalStderr = ""
     const arr : PyResponse[] = [] ; 
@@ -103,9 +101,9 @@ export async function runPython(file: string,timeout: number, tests: Testcase[])
       if(good){
         const result = await execPython(file , timeout ,tests[i].input  ) ; 
         result.expected = tests[i].output ; 
-        check(result , tests[i].output);
+        check<PyResponse>(result , tests[i].output , order);
         arr.push({...result , });   
-        if(deepEqual(result.code , 1)){
+        if(compare(result.code , 1 , 1)){
 
           globalStderr = result.stderr ; 
           good = false ; 
@@ -124,13 +122,13 @@ export async function runPython(file: string,timeout: number, tests: Testcase[])
     
 };
 
-export async function submitPython(file: string,timeout: number, tests: Testcase[]){
+export async function submitPython(file: string,timeout: number, tests: Testcase[] , order : number = 1){
   try{
     const subRes : SubmitResponse= { passed : 0  }  ; 
     for(let i = 0 ; i<tests.length ; i++){
       const {input , output} = tests[i] ;
-      const res = await execPython(file,timeout,input ) ;  
-      if (!deepEqual(res.result , output)){
+      const res = await execPython(file,timeout,input ) ; 
+      if (!compare(res.result , output , order)){
         subRes.result = res.result ; subRes.input = input ; subRes.stderr = res.stderr ;
         subRes.output = res.stdout , subRes.expected = output , subRes.message = "Wrong Answer" ;
         return subRes
@@ -141,45 +139,10 @@ export async function submitPython(file: string,timeout: number, tests: Testcase
     }
     subRes.message = "Accepted" ;
     return subRes ; 
-
   }
   finally {
-    //deleteFile(file)
+    deleteFile(file)
 
       }
 }
 
-
-function deepEqual(a: any, b: any) {
-  if (a === b) {
-    return true;
-  }
-
-  if (
-    a == null ||
-    b == null ||
-    typeof a !== "object" ||
-    typeof b !== "object"
-  ) {
-    return false;
-  }
-
-  if (Array.isArray(a) !== Array.isArray(b)) {
-    return false;
-  }
-
-  const keysA = Object.keys(a);
-  const keysB = Object.keys(b);
-
-  if (keysA.length !== keysB.length) {
-    return false;
-  }
-
-  for (let key of keysA) {
-    if (!keysB.includes(key) || !deepEqual(a[key], b[key])) {
-      return false;
-    }
-  }
-
-  return true;
-}

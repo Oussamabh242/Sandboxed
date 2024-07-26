@@ -1,0 +1,17 @@
+{
+    "name": "oussamabh242/sandbox",
+    "autoload": {
+        "psr-4": {
+            "Oussamabh242\\Sandbox\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Oussamabh242",
+            "email": "oussamabh242@gmail.com"
+        }
+    ],
+    "require": {
+        "corveda/php-sandbox": "^3.1"
+    }
+}

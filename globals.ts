@@ -2,7 +2,7 @@ import path from "path";
 
 export const BASE_DIR = path.resolve(__dirname, ".");
 export const MAX_OUTPUT_SIZE = 0.01* 1024 * 1024;
-
+console.log(BASE_DIR) ; 
 const llpy = `
 class LinkedList:
     def __init__(self, val, next=None):

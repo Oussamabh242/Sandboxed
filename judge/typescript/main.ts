@@ -3,7 +3,7 @@ import { readFileSync , existsSync , unlinkSync, unlink, writeFileSync } from "f
 import test from "node:test";
 import { stderr } from "process";
 import { deleteFile , createFile } from '../../shared/fileCreate';
-import { trimOutput } from '../../shared/utils'; 
+import { compare, trimOutput } from '../../shared/utils'; 
 
 
 interface CompileRes {
@@ -62,7 +62,7 @@ interface SubmitResponse extends RunResponse {
 async function writeCompiled(filePath : string, functionName : string) : Promise<{code: number , file : string , stderr? : string}>{
     const compiledFilePath = filePath.substring(0 , filePath.length-2)+"js" ; 
   const compileRes = await compile(filePath) ; 
-  if( !deepEqual(compileRes.code , 0) || compileRes.stderr.length>0){
+  if( !compare(compileRes.code , 0 ,1) || compileRes.stderr.length>0){
     return {code: compileRes.code ,file : compiledFilePath , stderr: compileRes.stderr}
   }
 
@@ -97,7 +97,7 @@ export async function execTypescript(compiledFile: string , timeout:number , inp
 				});
 
 				child.on('message', (msg: any) => {
-						if (deepEqual(msg.type , 'result')) {
+						if (compare(msg.type , 'result' , 1)) {
 										response.result=msg.content ; 
 		                  						}
 				});
@@ -124,7 +124,7 @@ export async function runTypescript(file: string, timeout: number, tests: Testca
     let good = true ; let globalStderr = "" ; 
     const arr : RunResponse[] = [] ; 
     
-    if(!deepEqual(compiling.code , 0) || compiling.stderr ){
+    if(!compare(compiling.code , 0 ,1) || compiling.stderr ){
       for(let i = 0 ; i< tests.length ; i++){
         arr.push({result : null , stderr : compiling.stderr ,message : "Compiling Error",stdout : "" , input : tests[i].input ,
       expected : tests[i].output} as RunResponse)  ;  
@@ -138,7 +138,7 @@ export async function runTypescript(file: string, timeout: number, tests: Testca
         let msg ;
         if(compare(res.result , tests[i].output ,order )){msg = "Accepted"} else {msg = "Wrong Answer"} ; 
         arr.push({...res , input : tests[i].input ,expected : tests[i].output ,message :msg  }as RunResponse)
-        if(!deepEqual(res.code , 0) && res.stderr){
+        if(!compare(res.code , 0, 1) && res.stderr){
           good = false  ; 
           globalStderr = res.stderr  ;
         }
@@ -160,7 +160,7 @@ export async function submitTypescript(file:string , timeout:number , tests : Te
   const compiling = await writeCompiled(file , functionName) ;
   try {
   let subResponse : SubmitResponse = {passed: 0 } ; 
-  if(!deepEqual(compiling.code , 0) || compiling.stderr){
+  if(!compare(compiling.code , 0, 1) || compiling.stderr){
     subResponse = {
       passed : 0 , 
       stderr : compiling.stderr , 
@@ -217,57 +217,6 @@ const x : Testcase[] =[
 
 // submitTypescript("xxx.ts" ,5,x,0).then(res=>console.log(res))
 
-function deepEqual(a: any, b: any) {
-  if (a === b) {
-    return true;
-  }
-
-  if (
-    a == null ||
-    b == null ||
-    typeof a !== "object" ||
-    typeof b !== "object"
-  ) {
-    return false;
-  }
-
-  if (Array.isArray(a) !== Array.isArray(b)) {
-    return false;
-  }
-
-  const keysA = Object.keys(a);
-const keysB = Object.keys(b);
-
-  if (keysA.length !== keysB.length) {
-    return false;
-  }
-
-  for (let key of keysA) {
-    if (!keysB.includes(key) || !deepEqual(a[key], b[key])) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-
-
-function compare(a: any, b: any, order:number =    1): boolean {
-    if (Array.isArray(a) && Array.isArray(b)) {
-        if (order === 0) {
-            const containsAllElements = (arr1: any[], arr2: any[]) => 
-                arr1.every(item1 => arr2.some(item2 => deepEqual(item1, item2)));
-
-            return containsAllElements(a, b) && containsAllElements(b, a);
-        } else {
-
-            return deepEqual(a, b);
-        }
-    } else {
-        return deepEqual(a, b);
-    }
-}
 
 const  writevm  = (code :string , functionName : string)=>{
   

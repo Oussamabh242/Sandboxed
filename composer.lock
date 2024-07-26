@@ -1,0 +1,196 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "This file is @generated automatically"
+    ],
+    "content-hash": "61ef0583e75eaa03aee5afa1a298ea0d",
+    "packages": [
+        {
+            "name": "corveda/php-sandbox",
+            "version": "v3.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Corveda/PHPSandbox.git",
+                "reference": "0e14807f2172abfd8dd49fae7750a227d7309fe9"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Corveda/PHPSandbox/zipball/0e14807f2172abfd8dd49fae7750a227d7309fe9",
+                "reference": "0e14807f2172abfd8dd49fae7750a227d7309fe9",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "nikic/php-parser": "^5.0",
+                "php": ">=7.4|>=8.0",
+                "simpletools/functionparser": "^1.0"
+            },
+            "replace": {
+                "fieryprophet/php-sandbox": "*"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^9.5",
+                "symfony/yaml": "~3.0|~4.0|~5.0"
+            },
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "src/functions.php"
+                ],
+                "psr-4": {
+                    "PHPSandbox\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Elijah Horton",
+                    "email": "elijah@corveda.com"
+                },
+                {
+                    "name": "Corveda, LLC."
+                }
+            ],
+            "description": "A PHP library that can be used to run PHP code in a sandboxed environment",
+            "homepage": "https://phpsandbox.org/",
+            "keywords": [
+                "blacklist",
+                "parser",
+                "php",
+                "sandbox",
+                "whitelist"
+            ],
+            "support": {
+                "issues": "https://github.com/Corveda/PHPSandbox/issues",
+                "source": "https://github.com/Corveda/PHPSandbox/tree/v3.1"
+            },
+            "time": "2024-02-17T16:26:09+00:00"
+        },
+        {
+            "name": "nikic/php-parser",
+            "version": "v5.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/nikic/PHP-Parser.git",
+                "reference": "683130c2ff8c2739f4822ff7ac5c873ec529abd1"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/nikic/PHP-Parser/zipball/683130c2ff8c2739f4822ff7ac5c873ec529abd1",
+                "reference": "683130c2ff8c2739f4822ff7ac5c873ec529abd1",
+                "shasum": ""
+            },
+            "require": {
+                "ext-ctype": "*",
+                "ext-json": "*",
+                "ext-tokenizer": "*",
+                "php": ">=7.4"
+            },
+            "require-dev": {
+                "ircmaxell/php-yacc": "^0.0.7",
+                "phpunit/phpunit": "^9.0"
+            },
+            "bin": [
+                "bin/php-parse"
+            ],
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "5.0-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "PhpParser\\": "lib/PhpParser"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Nikita Popov"
+                }
+            ],
+            "description": "A PHP parser written in PHP",
+            "keywords": [
+                "parser",
+                "php"
+            ],
+            "support": {
+                "issues": "https://github.com/nikic/PHP-Parser/issues",
+                "source": "https://github.com/nikic/PHP-Parser/tree/v5.1.0"
+            },
+            "time": "2024-07-01T20:03:41+00:00"
+        },
+        {
+            "name": "simpletools/functionparser",
+            "version": "1.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/getsimpletools/FunctionParser.git",
+                "reference": "70be7b13ede36befcbc76bc796740650ecaa14b9"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/getsimpletools/FunctionParser/zipball/70be7b13ede36befcbc76bc796740650ecaa14b9",
+                "reference": "70be7b13ede36befcbc76bc796740650ecaa14b9",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.4"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "FunctionParser\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Jeremy Lindblom",
+                    "role": "Creator"
+                },
+                {
+                    "name": "Ciaran Moore",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Function parser for PHP functions, methods, and closures",
+            "homepage": "https://github.com/getsimpletools/FunctionParser",
+            "keywords": [
+                "closure",
+                "function",
+                "parser",
+                "tokenizer"
+            ],
+            "support": {
+                "source": "https://github.com/getsimpletools/FunctionParser/tree/1.0.1"
+            },
+            "time": "2024-02-16T11:35:03+00:00"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": [],
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": [],
+    "platform-dev": [],
+    "plugin-api-version": "2.6.0"
+}

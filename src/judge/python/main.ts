@@ -103,7 +103,7 @@ export async function runPython(file: string,timeout: number, tests: Testcase[],
         result.expected = tests[i].output ; 
         check<PyResponse>(result , tests[i].output , order);
         arr.push({...result , });   
-        if(compare(result.code , 1 , 1)){
+        if( compare(result.code , 1 , 1)){
 
           globalStderr = result.stderr ; 
           good = false ; 

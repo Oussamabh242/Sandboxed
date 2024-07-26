@@ -53,8 +53,7 @@ interface Response {
 }
 
 
-export function check<T extends Response>(response:T  , expected: any , order:number = 1)
-{
+export function check<T extends Response>(response:T  , expected: any , order:number = 1){
     if(response.result !== null){
 			compare(response.result , expected , order)? response.message = "Accepted" : response.message = "Wrong Answer" ; 
 		}

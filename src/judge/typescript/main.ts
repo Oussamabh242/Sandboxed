@@ -4,8 +4,7 @@ import test from "node:test";
 import { stderr } from "process";
 import { deleteFile , createFile } from '../../shared/fileCreate';
 import { compare, trimOutput } from '../../shared/utils'; 
-
-
+import { BASE_DIR } from "../../globals";
 interface CompileRes {
   code : number ,
   stderr : string ,
@@ -36,20 +35,28 @@ interface SubmitResponse extends RunResponse {
 
  function compile(file: string) : Promise<CompileRes> {
    return new Promise(async (resolve) => {
-      let stderr: string = "";
+      let stderr: string = ""
+      let stdout: string = "";
       const compiledFilePath = file.substring(0 , file.length-2) +"js"
-      const child = spawn("npx", ["tsc", file], {
+      const child = spawn("npx", ["swc", file], {
         stdio: ["pipe", "pipe", "pipe", "ipc"],
       });
       child.stdout?.on("data", (data : any) => {
-        stderr += data.toString();
+        stdout += data.toString();
       });
+      child.stderr?.on("data" , (data : any)=>{
+      stderr+=data.toString()
+    })
 
       child.on("close", (code : any) => {
-        let compiled = "";
-        if (code === 0 && stderr.length === 0) {
-          compiled = readFileSync(compiledFilePath).toString();
-        }
+        let lines = stdout.split("\n");
+        lines.shift()
+
+        const compiled = lines.join("\n") ;
+        //if (code === 0 && stderr.length === 0) {
+        //  compiled = readFileSync(compiledFilePath).toString();
+        //}
+        //console.log(stdout)
         // unlinkSync(compiledFilePath);
         unlinkSync(file); //MTH F
         resolve({ code, stderr, compiled });
@@ -59,7 +66,11 @@ interface SubmitResponse extends RunResponse {
    });
  }
 
+//compile(BASE_DIR+"/user_code/x.ts").then(res=>console.log(res)) ;
+
+
 async function writeCompiled(filePath : string, functionName : string) : Promise<{code: number , file : string , stderr? : string}>{
+  return new Promise(async (resolve)=>{
     const compiledFilePath = filePath.substring(0 , filePath.length-2)+"js" ; 
   const compileRes = await compile(filePath) ; 
   if( !compare(compileRes.code , 0 ,1) || compileRes.stderr.length>0){
@@ -68,7 +79,8 @@ async function writeCompiled(filePath : string, functionName : string) : Promise
 
   writeFileSync(compiledFilePath, writevm(compileRes.compiled , functionName)) ;
   // await deleteFile(filePath) ; 
-  return {code : 0 , file :  compiledFilePath}
+   resolve({code : 0 , file :  compiledFilePath})
+  })
 }
 
 export async function execTypescript(compiledFile: string , timeout:number , input : any ): Promise<ExecResponse>{
@@ -97,7 +109,7 @@ export async function execTypescript(compiledFile: string , timeout:number , inp
 				});
 
 				child.on('message', (msg: any) => {
-						if (compare(msg.type , 'result' , 1)) {
+						if (compare(msg.type , 'result')) {
 										response.result=msg.content ; 
 		                  						}
 				});
@@ -156,7 +168,7 @@ export async function runTypescript(file: string, timeout: number, tests: Testca
 };
 
 
-export async function submitTypescript(file:string , timeout:number , tests : Testcase[] ,functionName : string , order : number){
+export async function submitTypescript(file:string , timeout:number , tests : Testcase[] ,functionName : string , order : number){ 
   const compiling = await writeCompiled(file , functionName) ;
   try {
   let subResponse : SubmitResponse = {passed: 0 } ; 
@@ -222,7 +234,7 @@ const  writevm  = (code :string , functionName : string)=>{
   
 return `
 const ivm = require('isolated-vm');
-const isolate = new ivm.Isolate({ memoryLimit: 50 });
+const isolate = new ivm.Isolate();
 
 function inputToArray() {
     const input = JSON.parse(process.argv[2]); 

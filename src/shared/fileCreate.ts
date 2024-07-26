@@ -82,13 +82,6 @@ const formulatePython = (code: string , functionName : string) =>{
   return modedCode
 }
 const formulateTypeScript = (code: string)=>{
-/*  let modedCode = input.typescript +"\n"+stripImports(code)+"\n"+ `
-
-   parse(twoSum(...(inputToArray() as [any , any])));
-
-` 
-  return modedCode ;*/
-
   return code ; 
 } 
 
@@ -132,7 +125,6 @@ $options = [
     'allow_brackets' => true,
     'allow_static_variables' => true,
 ]; 
-echo "supppppppppp" ;
 
 $blocked_functions = [ 
     'exec', 'shell_exec', 'system', 'passthru', 'popen', 'proc_open',

@@ -8,7 +8,7 @@ import { runPhp, submitPhp } from "./php/main";
 export async function runGateway(language : string , file : string , timeout :number , testcases : any[],functionName: string, order : number) {
   switch (language) {
     case "python":
-      return await runPython(file , timeout , testcases); 
+      return await runPython(file , timeout , testcases,  order); 
      break; 
     case "typescript" :
       return await runTypescript(file , timeout , testcases , functionName, order) ;
@@ -22,7 +22,7 @@ export async function runGateway(language : string , file : string , timeout :nu
 export async function submitGateway(language:string , file :string , timeout : number , testcases : any[] , functionName : string , order : number){
   switch (language) {
     case "python":
-      return await submitPython(file ,timeout ,testcases); 
+      return await submitPython(file ,timeout ,testcases , order); 
     case "typescript" :
       return await submitTypescript(file ,timeout ,testcases , functionName , order) ; 
     case "php":

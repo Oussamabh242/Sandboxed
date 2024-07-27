@@ -12,12 +12,15 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@types/better-queue": "^3.8.6",
     "@types/body-parser": "^1.19.5",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/underscore": "^1.11.15",
     "@types/uuid": "^10.0.0",
+    "better-queue": "^3.8.12",
     "body-parser": "^1.20.2",
+    "bottleneck": "^2.19.5",
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "isolated-vm": "^5.0.1",
@@ -27,5 +30,9 @@
     "typescript": "^5.5.4",
     "underscore": "^1.13.6",
     "uuid": "^10.0.0"
+  },
+  "devDependencies": {
+    "@swc/cli": "^0.4.0",
+    "@swc/core": "^1.7.2"
   }
 }

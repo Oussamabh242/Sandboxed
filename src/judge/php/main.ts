@@ -1,4 +1,4 @@
-import {spawn} from 'child_process' ; 
+import {spawnSync , spawn} from 'child_process' ; 
 import path from 'path' ;
 import { createFile, deleteFile } from '../../shared/fileCreate';
 import { trimOutput } from '../../shared/utils';
@@ -38,12 +38,12 @@ interface SubmitResponse {
 
 function execPhp(file : string , timeout : number , input :any) : Promise<PhpResponse> {
   return new Promise((resolve) => {
-    const phpChild= spawn("php", [file, JSON.stringify(input)], {
+    const phpChild=  spawn("php", [file, JSON.stringify(input)], {
       stdio: ["pipe", "pipe", "pipe", "ipc"],
     });
     const response: PhpResponse = { stdout: "", stderr: "", message: "" , code : 0 };
     const timer = setTimeout(() => {
-      phpChild.kill("SIGKILL");
+      phpChild.kill();
       response.message = "Time Limit Exceeded";
       response.stderr = "Time Limit Exceeded";
       response.code = 1
@@ -126,7 +126,7 @@ export async function submitPhp(file: string, timeout: number, tests: Testcase[]
       const { input, output } = tests[i];
       try {
         const res = await execPhp(file, timeout, input);
-        if (!compare(res.result, output, order)) {
+        if (!await compare(res.result, output, order)) {
           subRes.result = res.result;
           subRes.input = input;
           subRes.stderr = res.stderr;
@@ -146,11 +146,11 @@ export async function submitPhp(file: string, timeout: number, tests: Testcase[]
     subRes.message = "Accepted";
     return subRes;
   } finally {
-    //try {
-    //  await deleteFile(file);
-    //} catch (err) {
-    //  console.error(`Error deleting file ${file}:`, err);
-    //}
+    try {
+      await deleteFile(file);
+    } catch (err) {
+      console.error(`Error deleting file ${file}:`, err);
+    }
   }
 }
 
@@ -187,4 +187,5 @@ const tests: Testcase[] = [
 
 
 //
+
 

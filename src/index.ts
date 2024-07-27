@@ -6,17 +6,31 @@ import { BASE_DIR } from "./globals";
 import { runGateway } from "./judge/gateway";
 import { submitGateway } from "./judge/gateway";
 import { parse } from "uuid";
+import Bottleneck from "bottleneck";
 
+
+const limiter = new Bottleneck({
+  minTime : 100,
+  maxConcurrent : 5
+})
+
+const rateLimiter = (req:any , res:any , next : any)=>{
+  limiter.schedule(()=>{
+
+    return new Promise((resolve)=>{
+      res.on("finish" , resolve) ; 
+      next() ; 
+    })
+  })
+}
 
 const app = express()
 const port = process.env.PORT || 3333 ; 
 
-let num = 0 ; 
-
 app.use(bodyParser.json()); 
 app.use(cors()) ; 
 
-app.post("/run" , async (req:Request , res : Response) => {
+app.post("/run" ,rateLimiter ,  async (req:Request,  res : Response) => {
     const {code , timeout , language ,functionName, tests,order } = req.body ;
     const file = await createFile(language, code, BASE_DIR , functionName ,Object.keys(tests[0].input).length); 
     const result = await runGateway(language ,file , parseInt(timeout) , tests , functionName , parseInt(order)) ; 
@@ -28,7 +42,7 @@ app.post("/run" , async (req:Request , res : Response) => {
 
 // submitGateway(language ,file,timeout ,tests , functionName).then(res=>console.log(res))
 
- app.post("/submit" , async(req: Request , res :Response)=>{
+ app.post("/submit" ,rateLimiter ,async(req: Request , res :Response)=>{
    const {code ,  timeout , language  , functionName , tests , order} = req.body ; 
   
    const file =await  createFile(language ,code , BASE_DIR , functionName , Object.keys(tests[0].input).length) ;

@@ -1,8 +1,11 @@
-import {spawn} from 'child_process' ; 
+import {spawn , exec} from 'child_process' ; 
 import path from 'path' ;
 import { deleteFile } from '../../shared/fileCreate';
 import { compare, trimOutput } from '../../shared/utils';
 import { check } from '../../shared/utils';
+import { BASE_DIR } from '../../globals';
+
+;
 
 interface PyResponse {
   stdout: string;
@@ -42,10 +45,9 @@ interface SubmitResponse {
 
 
 
-
 function execPython(file : string , timeout : number , input :any) : Promise<PyResponse> {
   return new Promise((resolve) => {
-    const pyChild = spawn("python3", [file, JSON.stringify(input)], {
+    const pyChild = spawn(BASE_DIR+"/.venv/bin/python3", [file, JSON.stringify(input)], {
       stdio: ["pipe", "pipe", "pipe", "ipc"],
     });
     const response: PyResponse = { stdout: "", stderr: "", message: "" , code : 0 };

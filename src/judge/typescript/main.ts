@@ -1,10 +1,7 @@
 import { spawn } from "child_process"; 
 import { readFileSync , existsSync , unlinkSync, unlink, writeFileSync } from "fs" ; 
-import test from "node:test";
-import { stderr } from "process";
 import { deleteFile , createFile } from '../../shared/fileCreate';
 import { compare, trimOutput } from '../../shared/utils'; 
-import { BASE_DIR } from "../../globals";
 interface CompileRes {
   code : number ,
   stderr : string ,
@@ -74,7 +71,7 @@ async function writeCompiled(filePath : string, functionName : string) : Promise
     const compiledFilePath = filePath.substring(0 , filePath.length-2)+"js" ; 
   const compileRes = await compile(filePath) ; 
   if( !compare(compileRes.code , 0 ,1) || compileRes.stderr.length>0){
-    return {code: compileRes.code ,file : compiledFilePath , stderr: compileRes.stderr}
+    resolve( {code: compileRes.code ,file : compiledFilePath , stderr: compileRes.stderr})
   }
 
   writeFileSync(compiledFilePath, writevm(compileRes.compiled , functionName)) ;
@@ -231,7 +228,6 @@ const x : Testcase[] =[
 
 
 const  writevm  = (code :string , functionName : string)=>{
-  
 return `
 const ivm = require('isolated-vm');
 const isolate = new ivm.Isolate();

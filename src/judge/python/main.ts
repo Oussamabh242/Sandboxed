@@ -38,7 +38,7 @@ interface SubmitResponse {
 		input? : any 
 		result? : any
 		expected? : any
-		output?: string
+		stdout?: string
 		stderr?: string 
 		message?: string
 }
@@ -47,9 +47,13 @@ interface SubmitResponse {
 
 function execPython(file : string , timeout : number , input :any) : Promise<PyResponse> {
   return new Promise((resolve) => {
-    const pyChild = spawn(BASE_DIR+"/.venv/bin/python3", [file, JSON.stringify(input)], {
-      stdio: ["pipe", "pipe", "pipe", "ipc"],
-    });
+    const pyChild = spawn(
+      BASE_DIR + "/.venv/bin/python3",
+      [file, JSON.stringify(input)],
+      {
+        stdio: ["pipe", "pipe", "pipe", "ipc"],
+      }
+    );
     const response: PyResponse = { stdout: "", stderr: "", message: "" , code : 0 };
     const timer = setTimeout(() => {
       pyChild.kill("SIGKILL");
@@ -64,6 +68,7 @@ function execPython(file : string , timeout : number , input :any) : Promise<PyR
     pyChild.stderr?.on("data", (data) => {
       response.stderr += data.toString();
       response.result = null;
+      response.code = 1 ; 
     });
     pyChild.on("error", (error) => {
       response.stderr += error.toString();
@@ -96,7 +101,7 @@ function trimFileName(errorMessage: string) {
 
 export async function runPython(file: string,timeout: number, tests: Testcase[], order : number = 1): Promise<PyResponse[] >{
   try{
-    let good = true ; let globalStderr = ""
+    let good = true ; let globalStderr = "";
     const arr : PyResponse[] = [] ; 
     
     for(let i = 0 ; i<tests.length ; i++){
@@ -104,9 +109,8 @@ export async function runPython(file: string,timeout: number, tests: Testcase[],
         const result = await execPython(file , timeout ,tests[i].input  ) ; 
         result.expected = tests[i].output ; 
         check<PyResponse>(result , tests[i].output , order);
-        arr.push({...result , });   
+        arr.push({...result ,input : tests[i].input });   
         if( compare(result.code , 1 , 1)){
-
           globalStderr = result.stderr ; 
           good = false ; 
         }
@@ -132,7 +136,7 @@ export async function submitPython(file: string,timeout: number, tests: Testcase
       const res = await execPython(file,timeout,input ) ; 
       if (!compare(res.result , output , order)){
         subRes.result = res.result ; subRes.input = input ; subRes.stderr = res.stderr ;
-        subRes.output = res.stdout , subRes.expected = output , subRes.message = "Wrong Answer" ;
+        subRes.stdout = res.stdout , subRes.expected = output , subRes.message = "Wrong Answer" ;
         return subRes
       }
       else{

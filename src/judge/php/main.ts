@@ -28,7 +28,7 @@ interface SubmitResponse {
 		input? : any 
 		result? : any
 		expected? : any
-		output?: string
+		stdout?: string
 		stderr?: string 
 		message?: string
 }
@@ -55,6 +55,7 @@ function execPhp(file : string , timeout : number , input :any) : Promise<PhpRes
     phpChild.stderr?.on("data", (data) => {
       response.stderr += data.toString();
       response.result = null;
+      response.code = 1 ; 
     });
     phpChild.on("error", (error) => {
       response.stderr += error.toString();
@@ -96,7 +97,7 @@ export async function runPhp(file: string,timeout: number, tests: Testcase[] , o
         const result = await execPhp(file , timeout ,tests[i].input  ) ; 
         result.expected = tests[i].output ; 
         check<PhpResponse>(result , tests[i].output, order);
-        arr.push({...result , });   
+        arr.push({...result ,input : tests[i].input });   
         if(compare(result.code , 1, 1)){
 
           globalStderr = result.stderr ; 
@@ -130,7 +131,7 @@ export async function submitPhp(file: string, timeout: number, tests: Testcase[]
           subRes.result = res.result;
           subRes.input = input;
           subRes.stderr = res.stderr;
-          subRes.output = res.stdout;
+          subRes.stdout = res.stdout;
           subRes.expected = output;
           subRes.message = "Wrong Answer";
           return subRes;

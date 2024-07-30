@@ -80,35 +80,7 @@ class BinaryTree :
 `; 
 
 
-//export const inputpy = `
-//import sys
-//import json
-//def inputToArray() :
-//    input = json.loads(sys.argv[1])
-//    out = []
-//    for i in input.keys() :
-//        # linked , tree
-//        if i == "linked":
-//            out.append(LinkedList.listToLinkedList(input[i]))
-//        elif i == "tree" : 
-//            out.append(BinaryTree.listToBTree(input[i]))
-//        else : 
-//            out.append(input[i])
-//
-//    return out
-//
-//
-//
-//def parse(output) : 
-//    temp = output
-//    if isinstance(output ,BinaryTree) or isinstance(output , LinkedList) : 
-//        temp = output.toList()
-//    temp_dict = {
-//        "type" : "result" , 
-//        "content" : temp
-//    }
-//    print(json.dumps(temp_dict))
-//`;
+
 
 const inputpy = `
 import sys

@@ -201,32 +201,6 @@ export async function submitTypescript(file:string , timeout:number , tests : Te
 }
 
 
-const x : Testcase[] =[
-    {
-        "input": { "candidates": [2, 3, 6, 7], "target": 7 },
-        "output": [[2, 2, 3] , [7]]
-    },
-    {
-        "input": { "candidates": [2, 3, 5], "target": 8 },
-        "output": [[2, 2, 2, 2], [2, 3, 3], [3, 5]]
-    },
-    {
-        "input": { "candidates": [1], "target": 1 },
-        "output": [[1]]
-    },
-    {
-        "input": { "candidates": [1], "target": 2 },
-        "output": [[1, 1]]
-    },
-    {
-        "input": { "candidates": [2], "target": 1 },
-        "output": []
-    }
-]
-
-// submitTypescript("xxx.ts" ,5,x,0).then(res=>console.log(res))
-
-
 const  writevm  = (code :string , functionName : string)=>{
 return `
 const ivm = require('isolated-vm');

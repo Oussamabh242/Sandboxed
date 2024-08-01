@@ -204,7 +204,7 @@ export async function submitTypescript(file:string , timeout:number , tests : Te
 const  writevm  = (code :string , functionName : string)=>{
 return `
 const ivm = require('isolated-vm');
-const isolate = new ivm.Isolate();
+const isolate = new ivm.Isolate({ memoryLimit: 20});
 
 function inputToArray() {
     const input = JSON.parse(process.argv[2]); 

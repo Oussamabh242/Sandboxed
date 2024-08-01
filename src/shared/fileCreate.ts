@@ -101,7 +101,6 @@ function formulatePhp(code : string , functionName : string , inputNumber : numb
 
 require_once('vendor/autoload.php');
 
-
 $arg = $argv[1];
 
 function insertJsonValuesIntoArray($jsonString) {

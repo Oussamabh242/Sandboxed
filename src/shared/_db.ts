@@ -52,3 +52,7 @@ export async function createProblem({order , testCases , execTime , functionName
   return problem
 }
 
+export async function getProblems(){
+  const problems = await prisma.problem.findMany() ;
+  return problems
+}

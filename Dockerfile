@@ -19,7 +19,7 @@
 
 # CMD ["npm" , "start"]
 
-FROM node:20
+#FROM node:20-slim
 
 # Install system dependencies and Composer
 # RUN apt-get update && \
@@ -73,7 +73,7 @@ FROM node:20
 # CMD ["npm", "start"]
 
 
-FROM node:20
+FROM node:20-slim
 
 # Install system dependencies and Composer
 RUN apt-get update && \
@@ -82,9 +82,20 @@ RUN apt-get update && \
     php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" && \
     php composer-setup.php --install-dir=/usr/local/bin --filename=composer && \
     php -r "unlink('composer-setup.php');"
-
-
-
+#
+# RUN apt-get update && \
+#     apt-get install -y --no-install-recommends \
+#     python3-minimal \
+#     python3-pip \
+#     python3-venv \
+#     python3-dev \
+#     php-cli \
+#     git \
+#     unzip \
+#     && apt-get clean && \
+#     rm -rf /var/lib/apt/lists/* && \
+#     curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+#
 
 WORKDIR /usr/app
 
@@ -122,3 +133,33 @@ EXPOSE 3333
 # Start the application
 CMD ["npm", "start"]
 
+
+
+
+# FROM node:20-alpine
+#
+# # Install system dependencies and Composer
+# RUN apk add --no-cache python3 py3-pip python3-dev build-base php7 php7-cli php7-mbstring git unzip && \
+#     pip install --upgrade pip && \
+#     curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer && \
+#     rm -rf /var/cache/apk/*
+#
+# WORKDIR /usr/app
+#
+# COPY package*.json composer*.json ./
+#
+# # Set permissions for user_code directory
+# COPY . .
+#
+# RUN npm install && composer install
+# RUN npm run build
+# RUN python3 -m venv .venv && .venv/bin/pip install pyseccomp
+#
+# RUN mkdir -p user_code && chmod 777 user_code
+#
+# # Change permissions for all directories
+# RUN find . -type d -exec chmod 777 {} \;
+#
+#
+#
+# CMD ["npm", "start"] 

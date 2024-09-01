@@ -1,12 +1,12 @@
 import express, { Request, Response } from "express";
-import bodyParser from "body-parser";
+import bodyParser, { json } from "body-parser";
 import cors from "cors";
 import { createFile } from "./shared/fileCreate";
 import { BASE_DIR } from "./globals";
 import { runGateway } from "./judge/gateway";
 import { submitGateway } from "./judge/gateway";
 import Bottleneck from "bottleneck";
-import { createProblem, getProblemInfo } from "./shared/_db";
+import { createProblem, getProblemInfo, getProblems } from "./shared/_db";
 
 const limiter = new Bottleneck({
   minTime : 150,
@@ -98,16 +98,26 @@ app.post("/run" ,rateLimiter ,  async (req:Request,  res : Response) => {
 
 
 app.post("/problem" , async (req, res)=>{
-  const { id, testCases, execTime , order , functionName } = req.body;
   try {
-    const problem = await createProblem(req.body) ; 
-    res.status(201).send({"msg" : "created successfully"}) ; 
+    const problem = await createProblem({...req.body , testCases : JSON.stringify(req.body.testCases)}) ; 
+    res.status(201).json(problem) ; 
   }
   catch(err){
     console.log(err)
     res.status(500).send("Error Happend") ; 
   }
 
+}); 
+
+app.get("/problem" , async (req , res)=>{
+  try {
+    const problems =await getProblems() ; 
+    res.json(problems) ; 
+  }
+  catch(err){
+    console.error(err) ; 
+    res.status(500).send("Error Happend")
+  }
 })
 
 app.listen(port , ()=>{

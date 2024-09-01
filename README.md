@@ -2,7 +2,7 @@
 
 # Introduction
 
-This repository provides a Docker-based environment to run and test user-submitted code against predefined problems. It supports Python and TypeScript by running each user submitted code as a child process ensuring a low latency time .
+This repository provides a Docker-based environment to run and test user-submitted code against predefined problems. It supports Python, TypeScript, Php by running each user submitted code as a child process ensuring a low latency time .
 
 ## How to Run
 
@@ -136,3 +136,8 @@ Submitting a solution in TypeScript
 }
 ```
 
+**Note:**
+
+I am used the swc compiler for typescript to increase performace but the tradeoffs are : 
+1. sometimes you got some unreadable error unlike tsc 
+2. less strictness than tsc

@@ -24,7 +24,7 @@ const rateLimiter = (req:any , res:any , next : any)=>{
 }
 
 const app = express()
-const port = process.env.PORT || 3333 ; 
+const port = process.env.PORT || 3000 ; 
 
 app.use(bodyParser.json()); 
 app.use(cors()) ; 

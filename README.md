@@ -39,7 +39,6 @@ Create a new problem with test cases.
   id: string;
   order: number;
   testCases: []{
-    id : number ,
     input:{
       arg1 : val1, 
       arg2 : val2
@@ -57,40 +56,34 @@ Valid Parenthesis Problem
 
 
 ```js
-
 {
   "order": 1,
   "testCases": [
     {
-      "id": 1,
       "input": {
         "arg1": "()"
       },
       "output": true
     },
     {
-      "id": 2,
       "input": {
         "arg1": "()[]{}"
       },
       "output": true
     },
     {
-      "id": 3,
       "input": {
         "arg1": "(]"
       },
       "output": false
     },
     {
-      "id": 4,
       "input": {
         "arg1": "([)]"
       },
       "output": false
     },
     {
-      "id": 5,
       "input": {
         "arg1": "{[]}"
       },

@@ -131,6 +131,6 @@ Submitting a solution in TypeScript
 
 **Note:**
 
-I am used the swc compiler for typescript to increase performace but the tradeoffs are : 
+I used the swc compiler for typescript to increase performace but the tradeoffs are : 
 1. sometimes you got some unreadable error unlike tsc 
 2. less strictness than tsc
